@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniBudget ULIMA PRO</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="left">
+        <img id="ulimaLogo" src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Universidad_de_Lima_logo.svg" alt="ULIMA logo">
+        <div class="title-block">
+          <div class="main-title">UniBudget <span class="tag">ULIMA PRO</span></div>
+          <div class="subtitle">Gestor de finanzas para estudiantes</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="username-area">
+          <input id="studentName" placeholder="Tu nombre (p. ej. Juan)" maxlength="30" />
+        </div>
+        <button id="themeToggle" class="icon-btn" title="Cambiar tema">🌓</button>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <!-- Left column: controls + add -->
+      <section class="panel card">
+        <div class="panel-head">
+          <h3>Agregar transacción</h3>
+          <div class="small-muted">Registra ingresos y gastos</div>
+        </div>
+
+        <form id="txForm" class="form">
+          <div class="row">
+            <label>Fecha
+              <input id="date" type="date" required />
+            </label>
+            <label>Categoría
+              <select id="category">
+                <option>Matrícula</option>
+                <option>Cafetería ULIMA</option>
+                <option>Transporte</option>
+                <option>Materiales / Libros</option>
+                <option>Alojamiento</option>
+                <option>Entretenimiento</option>
+                <option>Salud</option>
+                <option>Otros</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="row">
+            <label>Tipo
+              <select id="type">
+                <option value="gasto">Gasto</option>
+                <option value="ingreso">Ingreso</option>
+              </select>
+            </label>
+
+            <label>Monto (S/)
+              <input id="amount" type="number" step="0.01" min="0.01" required />
+            </label>
+          </div>
+
+          <label>Nota
+            <input id="note" type="text" placeholder="Ej: Almuerzo" />
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Guardar</button>
+            <button type="button" id="btnClear" class="btn-ghost">Limpiar</button>
+            <button type="button" id="btnExport" class="btn-ghost">Exportar CSV</button>
+          </div>
+        </form>
+
+        <hr />
+
+        <div class="quick-tools">
+          <div>
+            <label>Presupuesto mensual (S/)</label>
+            <input id="budgetInput" type="number" step="1" min="0" placeholder="ej. 500" />
+            <button id="setBudget" class="btn-ghost">Fijar presupuesto</button>
+          </div>
+          <div>
+            <label>Conversor PEN ↔ USD</label>
+            <div class="conv-row">
+              <input id="convValue" type="number" step="0.01" placeholder="100" />
+              <select id="convDir"><option value="PENtoUSD">PEN → USD</option><option value="USDtoPEN">USD → PEN</option></select>
+              <button id="convBtn" class="btn-ghost">Convertir</button>
+            </div>
+            <div id="convResult" class="conv-result small-muted"></div>
+          </div>
+          <div>
+            <button id="resetData" class="btn-danger">Resetear datos (borrar)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Middle column: dashboard -->
+      <section class="dashboard card">
+        <div class="dash-top">
+          <div class="dash-card">
+            <div class="label">Ingresos</div>
+            <div class="value income" id="totalIncome">S/ 0.00</div>
+          </div>
+          <div class="dash-card">
+            <div class="label">Gastos</div>
+            <div class="value expense" id="totalExpense">S/ 0.00</div>
+          </div>
+          <div class="dash-card">
+            <div class="label">Balance</div>
+            <div class="value" id="balance">S/ 0.00</div>
+          </div>
+        </div>
+
+        <div class="dash-mid">
+          <div class="chart-area card">
+            <canvas id="pieChart" aria-label="Gastos por categoría"></canvas>
+            <div id="chartLegend" class="chart-legend"></div>
+          </div>
+
+          <div class="budget-area card">
+            <div class="label">Presupuesto mensual</div>
+            <div class="progress-bar">
+              <div id="budgetFill" class="progress-fill" style="width:0%"></div>
+            </div>
+            <div class="small-muted" id="budgetMeta">Sin presupuesto</div>
+          </div>
+        </div>
+
+        <div class="dash-bottom">
+          <div class="filters">
+            <input id="search" type="search" placeholder="Buscar por nota o categoría" />
+            <label>Desde <input id="from" type="date" /></label>
+            <label>Hasta <input id="to" type="date" /></label>
+            <select id="viewFilter">
+              <option value="all">Todas</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="gasto">Gastos</option>
+            </select>
+            <button id="applyFilters" class="btn-ghost">Aplicar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right column: transactions list -->
+      <aside class="list-panel card">
+        <div class="list-head">
+          <h4>Transacciones</h4>
+          <div class="small-muted" id="txCount">0 registros</div>
+        </div>
+
+        <ul id="txList" class="tx-list"></ul>
+
+        <div class="list-foot">
+          <button id="suggestBtn" class="btn-ghost">Sugerencias</button>
+          <button id="downloadCSV" class="btn-ghost">Descargar CSV</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      UniBudget ULIMA PRO — Prototipo académico • Datos locales (no compartidos)
+    </footer>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Script -->
+  <script src="script.js"></script>
+</body>
+</html>
